@@ -1,0 +1,1663 @@
+version: 2.1
+
+jobs:
+  postcheck_jess-smoke:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Chunk raw buffer
+          command: |
+            mkdir -p /tmp/pipeline
+            set +o pipefail 2>/dev/null; seq 1 1206522 | sha256sum > /tmp/pipeline/summary.out; true
+            echo "ready: $(sha256sum /tmp/pipeline/summary.out | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - summary.out
+  jess-smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/summary.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  audit_send-it:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Enumerate bucket keys
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; ( for i in $(seq 1 41046); do printf "%d\n" $i; done ) | sort -n | tail -1; true ; } > /tmp/pipeline/ckpt-D.pkl
+            echo "ready: $(sha256sum /tmp/pipeline/ckpt-D.pkl | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - ckpt-D.pkl
+  send-it:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/ckpt-D.pkl || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  ensure_alice-test:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Enumerate line counts
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; head -c 25165824 /dev/urandom | sha256sum; true ; } > /tmp/pipeline/gate-ready.txt
+            echo "ready: $(sha256sum /tmp/pipeline/gate-ready.txt | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - gate-ready.txt
+  alice-test:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  provision_LAB_RUN_1:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Churn allocator pool
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; ( for i in $(seq 1 11714); do printf "%08x\n" $RANDOM; done ) | sort | md5sum; true ; } > /tmp/pipeline/pt-E.pt
+            echo "ready: $(sha256sum /tmp/pipeline/pt-E.pt | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - pt-E.pt
+  LAB_RUN_1:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  retry_STG_RUN_3:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Spool byte frames
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 442365 | tr '0-9' 'a-j' | wc -c; true ; } > /tmp/pipeline/21.log
+            echo "ready: $(sha256sum /tmp/pipeline/21.log | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 21.log
+  STG_RUN_3:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  resync_tweak-router:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Enumerate token pairs
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 22844 | awk '{if($1%97==0)c++}END{print c}'; true ; } > /tmp/pipeline/54.bin
+            echo "ready: $(sha256sum /tmp/pipeline/54.bin | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 54.bin
+  tweak-router:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  preinit_ci-alt:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Compute spill delta
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 478284 | sha1sum; true ; } > /tmp/pipeline/secondary_task_output_v1.txt
+            echo "ready: $(sha256sum /tmp/pipeline/secondary_task_output_v1.txt | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - secondary_task_output_v1.txt
+  ci-alt:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/secondary_task_output_v1.txt || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  validate_run-partial-release-candidate:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Register task slot
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; yes 'line' | head -n 114478 | awk '{print NR, $0}' | tail -1; true ; } > /tmp/pipeline/65.data
+            echo "ready: $(sha256sum /tmp/pipeline/65.data | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 65.data
+  run-partial-release-candidate:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/65.data || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  dispatch_Rollout_Staging4:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Mirror config bundle
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 353013 | awk 'END{print NR}'; true ; } > /tmp/pipeline/report.log
+            echo "ready: $(sha256sum /tmp/pipeline/report.log | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - report.log
+  Rollout_Staging4:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  ctx2_mar14-rev:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Verify fixture integrity
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; tr -dc '0-9' </dev/urandom | head -c 614400 | wc -c; true ; } > /tmp/pipeline/timings.json
+            echo "ready: $(sha256sum /tmp/pipeline/timings.json | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - timings.json
+  mar14-rev:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/timings.json || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  g2_qa-x:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Build adjacency map
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 10667 | awk 'NR>15899 && NR<49270{s+=$1}END{print s}'; true ; } > /tmp/pipeline/80.data
+            echo "ready: $(sha256sum /tmp/pipeline/80.data | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 80.data
+  qa-x:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  cache_sanity:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Prepare block cipher
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{srand();s=0;for(i=0;i<381711;i++)s+=rand();printf "%.4f\n",s}'; true ; } > /tmp/pipeline/.state
+            echo "ready: $(sha256sum /tmp/pipeline/.state | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - .state
+  sanity:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  loader_brodcast:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Rotate ring buffer
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 221280 | paste - - - - | wc -l; true ; } > /tmp/pipeline/relay.state
+            echo "ready: $(sha256sum /tmp/pipeline/relay.state | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - relay.state
+  brodcast:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/relay.state || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  verify_v8-nightly5:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Reorder index entries
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 1464700 | awk '{a[$1%17]++}END{for(k in a) print k,a[k]}' | sort -n; true ; } > /tmp/pipeline/.sig
+            echo "ready: $(sha256sum /tmp/pipeline/.sig | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - .sig
+  v8-nightly5:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  linter_p-x:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Fuzz boundary edges
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; cat /dev/urandom | tr -dc 'a-f0-9' | head -c 215040 | fold -w16 | awk '!seen[$0]++' | wc -l; true ; } > /tmp/pipeline/step-pass.sig
+            echo "ready: $(sha256sum /tmp/pipeline/step-pass.sig | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - step-pass.sig
+  p-x:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-pass.sig || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  hydrate_verify:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Mirror arena state
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; tr -dc '0-9' </dev/urandom | head -c 2969600 | wc -c; true ; } > /tmp/pipeline/passoff.ok
+            echo "ready: $(sha256sum /tmp/pipeline/passoff.ok | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - passoff.ok
+  verify:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/passoff.ok || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  retry_jan21-ship:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Trim duplicate rows
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; cat /dev/urandom | tr -dc 'a-f0-9' | head -c 215040 | fold -w16 | awk '!seen[$0]++' | wc -l; true ; } > /tmp/pipeline/artifact.tar
+            echo "ready: $(sha256sum /tmp/pipeline/artifact.tar | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - artifact.tar
+  jan21-ship:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/artifact.tar || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  verify_jess-build:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Rebase partial order
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; ( echo "hdr"; seq 1 29360; echo "ftr" ) | wc -l; true ; } > /tmp/pipeline/checkpoint-B.pkl
+            echo "ready: $(sha256sum /tmp/pipeline/checkpoint-B.pkl | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - checkpoint-B.pkl
+  jess-build:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/checkpoint-B.pkl || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  verify_juliet:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Measure throughput
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 286957 | awk 'NR>24304 && NR<41978{s+=$1}END{print s}'; true ; } > /tmp/pipeline/60.blob
+            echo "ready: $(sha256sum /tmp/pipeline/60.blob | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 60.blob
+  juliet:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/60.blob || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  reserve_v1-ga5:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Reduce row partitions
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; tr -dc 'a-z0-9 ' </dev/urandom | head -c 409600 | tr ' ' '\n' | sort | uniq | wc -l; true ; } > /tmp/pipeline/main_phase_output_v3.log
+            echo "ready: $(sha256sum /tmp/pipeline/main_phase_output_v3.log | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - main_phase_output_v3.log
+  v1-ga5:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  g1_vb-2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Shuffle buffer blocks
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; yes 'line' | head -n 60545 | awk '{print NR, $0}' | tail -1; true ; } > /tmp/pipeline/.pid
+            echo "ready: $(sha256sum /tmp/pipeline/.pid | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - .pid
+  vb-2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/.pid || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  reup_phoenix-final:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Pivot result stream
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{srand();s=0;for(i=0;i<424957;i++)s+=rand();printf "%.4f\n",s}'; true ; } > /tmp/pipeline/step-29.log
+            echo "ready: $(sha256sum /tmp/pipeline/step-29.log | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - step-29.log
+  phoenix-final:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  phase_sierra-4:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Compile stats index
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; head -c 6291456 /dev/urandom | sha256sum; true ; } > /tmp/pipeline/stage-complete.log
+            echo "ready: $(sha256sum /tmp/pipeline/stage-complete.log | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - stage-complete.log
+  sierra-4:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  builder_anothr-run:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Audit path segments
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(a=1;a<=1;a++)for(b=1;b<=29953;b++)s+=a*b;print s}'; true ; } > /tmp/pipeline/handover.txt
+            echo "ready: $(sha256sum /tmp/pipeline/handover.txt | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - handover.txt
+  anothr-run:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  package_dp:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Audit fixture rows
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 19000 | awk '{for(i=1;i<=5;i++)s+=$1*i}END{print s}'; true ; } > /tmp/pipeline/main_phase_output_v2.txt
+            echo "ready: $(sha256sum /tmp/pipeline/main_phase_output_v2.txt | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - main_phase_output_v2.txt
+  dp:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  canary1_package:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Collate dictionary rows
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; tr -dc 'A-Za-z0-9' </dev/urandom | head -c 204800 | fold -w40 | sort | uniq -c | wc -l; true ; } > /tmp/pipeline/step-13.out
+            echo "ready: $(sha256sum /tmp/pipeline/step-13.out | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - step-13.out
+  package:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  kick_jan3-smoke:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Reset analytics bucket
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=0;i<266388;i++){s=sprintf("%d",i*13); for(j=1;j<=length(s);j++)c++};print c}'; true ; } > /tmp/pipeline/DONE
+            echo "ready: $(sha256sum /tmp/pipeline/DONE | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - DONE
+  jan3-smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  p2_depoly:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Prime cache tables
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=0;i<262595;i++){s=sprintf("%d",i*13); for(j=1;j<=length(s);j++)c++};print c}'; true ; } > /tmp/pipeline/2024-11-03.data
+            echo "ready: $(sha256sum /tmp/pipeline/2024-11-03.data | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 2024-11-03.data
+  depoly:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  stage_node20-vet:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Collect env snapshot
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; dd if=/dev/zero bs=1M count=17 2>/dev/null | gzip -9 | wc -c; true ; } > /tmp/pipeline/816b.out
+            echo "ready: $(sha256sum /tmp/pipeline/816b.out | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 816b.out
+  node20-vet:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+  Delta_rigel-rev:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Prune log tail
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 9000 | awk '{for(i=1;i<=5;i++)s+=$1*i}END{print s}'; true ; } > /tmp/pipeline/output.out
+            echo "ready: $(sha256sum /tmp/pipeline/output.out | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - output.out
+  rigel-rev:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Load previous
+          command: |
+            stat /tmp/pipeline/step-13.out || true
+      - run:
+          name: Pull sources
+          command: git clone --depth 2 --no-single-branch https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Unpack bundle
+          command: tar -xf core-pkg.tar
+      - run:
+          no_output_timeout: 15m
+          command: sleep 120
+      - run:
+          name: Verify output
+          command: cmake --version
+      - run:
+          no_output_timeout: 80m
+          command: /bin/sh -c "./build-run"
+
+  compile_jess-smoke_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Build summary row
+          command: |
+            mkdir -p /tmp/pipeline
+            set +o pipefail 2>/dev/null; seq 1 1206522 | sha256sum > /tmp/pipeline/summary.out; true
+            echo "ready: $(sha256sum /tmp/pipeline/summary.out | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - summary.out
+  p2_jess-build_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Rank query plans
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 175940 | paste - - - - | wc -l; true ; } > /tmp/pipeline/checkpoint-B.pkl
+            echo "ready: $(sha256sum /tmp/pipeline/checkpoint-B.pkl | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - checkpoint-B.pkl
+  reup_vb-2_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Mix shuffle salt
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 2 17036 | factor | wc -l; true ; } > /tmp/pipeline/.pid
+            echo "ready: $(sha256sum /tmp/pipeline/.pid | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - .pid
+  cleanup_brodcast_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Dispatch work units
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; ( for i in $(seq 1 16167); do echo "row-$i-$RANDOM"; done ) | md5sum; true ; } > /tmp/pipeline/relay.state
+            echo "ready: $(sha256sum /tmp/pipeline/relay.state | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - relay.state
+  produce_send-it_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Mint batch slot
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; dd if=/dev/urandom bs=4k count=260 2>/dev/null | md5sum; true ; } > /tmp/pipeline/ckpt-D.pkl
+            echo "ready: $(sha256sum /tmp/pipeline/ckpt-D.pkl | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - ckpt-D.pkl
+  bundle_jan21-ship_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Interleave stream pairs
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 170540 | awk '{print $1*$1}' | sha1sum | cut -c1-24; true ; } > /tmp/pipeline/artifact.tar
+            echo "ready: $(sha256sum /tmp/pipeline/artifact.tar | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - artifact.tar
+  cleanup_mar14-rev_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Deflate payload chunk
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; cat /dev/urandom | tr -dc '[:xdigit:]' | head -c 19456 | wc -c; true ; } > /tmp/pipeline/timings.json
+            echo "ready: $(sha256sum /tmp/pipeline/timings.json | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - timings.json
+  maker_p-x_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Expand parameter grid
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; tr -dc 'a-z' </dev/urandom | head -c 25165824 | fold -w16 | sort -u | wc -l; true ; } > /tmp/pipeline/step-pass.sig
+            echo "ready: $(sha256sum /tmp/pipeline/step-pass.sig | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - step-pass.sig
+  Gamma_run-partial-release-candidate_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Mint batch marker
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; head -c 11534336 /dev/urandom | md5sum; true ; } > /tmp/pipeline/65.data
+            echo "ready: $(sha256sum /tmp/pipeline/65.data | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 65.data
+  hook_ci-alt_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Walk directory tree
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; yes 'line' | head -n 53706 | awk '{print NR, $0}' | tail -1; true ; } > /tmp/pipeline/secondary_task_output_v1.txt
+            echo "ready: $(sha256sum /tmp/pipeline/secondary_task_output_v1.txt | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - secondary_task_output_v1.txt
+  tap_verify_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/pipeline
+      - run:
+          name: Build frequency table
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 379716 | awk '{if($1%97==0)c++}END{print c}'; true ; } > /tmp/pipeline/passoff.ok
+            echo "ready: $(sha256sum /tmp/pipeline/passoff.ok | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - passoff.ok
+  package_juliet_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Checkpoint window frame
+          command: |
+            mkdir -p /tmp/pipeline
+            { set +o pipefail 2>/dev/null; seq 1 106429 | awk '{s+=$1}END{print s}'; true ; } > /tmp/pipeline/60.blob
+            echo "ready: $(sha256sum /tmp/pipeline/60.blob | cut -c1-16)..."
+      - persist_to_workspace:
+          root: /tmp/pipeline
+          paths:
+            - 60.blob
+workflows:
+  main:
+    jobs:
+      - canary1_package
+      - reserve_v1-ga5
+      - package:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - v1-ga5:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - anothr-run:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - qa-x:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - sierra-4:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - rigel-rev:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - jan3-smoke:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - dp:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - phoenix-final:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - v8-nightly5:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - Rollout_Staging4:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - alice-test:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - depoly:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - tweak-router:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - node20-vet:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - LAB_RUN_1:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - STG_RUN_3:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - sanity:
+          requires:
+            - canary1_package
+            - reserve_v1-ga5
+      - postcheck_jess-smoke
+      - compile_jess-smoke_2:
+          requires:
+            - postcheck_jess-smoke
+      - jess-smoke:
+          requires:
+            - compile_jess-smoke_2
+      - verify_jess-build:
+          requires:
+            - compile_jess-smoke_2
+      - p2_jess-build_2:
+          requires:
+            - verify_jess-build
+      - jess-build:
+          requires:
+            - p2_jess-build_2
+      - g1_vb-2:
+          requires:
+            - p2_jess-build_2
+      - reup_vb-2_2:
+          requires:
+            - g1_vb-2
+      - vb-2:
+          requires:
+            - reup_vb-2_2
+      - loader_brodcast:
+          requires:
+            - reup_vb-2_2
+      - cleanup_brodcast_2:
+          requires:
+            - loader_brodcast
+      - brodcast:
+          requires:
+            - cleanup_brodcast_2
+      - audit_send-it:
+          requires:
+            - cleanup_brodcast_2
+      - produce_send-it_2:
+          requires:
+            - audit_send-it
+      - send-it:
+          requires:
+            - produce_send-it_2
+      - retry_jan21-ship:
+          requires:
+            - produce_send-it_2
+      - bundle_jan21-ship_2:
+          requires:
+            - retry_jan21-ship
+      - jan21-ship:
+          requires:
+            - bundle_jan21-ship_2
+      - ctx2_mar14-rev:
+          requires:
+            - bundle_jan21-ship_2
+      - cleanup_mar14-rev_2:
+          requires:
+            - ctx2_mar14-rev
+      - mar14-rev:
+          requires:
+            - cleanup_mar14-rev_2
+      - linter_p-x:
+          requires:
+            - cleanup_mar14-rev_2
+      - maker_p-x_2:
+          requires:
+            - linter_p-x
+      - p-x:
+          requires:
+            - maker_p-x_2
+      - validate_run-partial-release-candidate:
+          requires:
+            - maker_p-x_2
+      - Gamma_run-partial-release-candidate_2:
+          requires:
+            - validate_run-partial-release-candidate
+      - run-partial-release-candidate:
+          requires:
+            - Gamma_run-partial-release-candidate_2
+      - preinit_ci-alt:
+          requires:
+            - Gamma_run-partial-release-candidate_2
+      - hook_ci-alt_2:
+          requires:
+            - preinit_ci-alt
+      - ci-alt:
+          requires:
+            - hook_ci-alt_2
+      - hydrate_verify:
+          requires:
+            - hook_ci-alt_2
+      - tap_verify_2:
+          requires:
+            - hydrate_verify
+      - verify:
+          requires:
+            - tap_verify_2
+      - verify_juliet:
+          requires:
+            - tap_verify_2
+      - package_juliet_2:
+          requires:
+            - verify_juliet
+      - juliet:
+          requires:
+            - package_juliet_2
